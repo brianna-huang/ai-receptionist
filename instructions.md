@@ -3,6 +3,7 @@ Assignment: https://assort.notion.site/Assort-Health-Assignment-Building-a-Text-
 --- Instructions for running the agent ---
 
 Install a compatible Python (>=3.12, <4.0) if you don't have it
+
 Install Poetry: <https://python-poetry.org/docs/#installation>
 
 Install dependencies
