@@ -1,4 +1,4 @@
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 from openai import OpenAI
 import json
 from datetime import datetime
@@ -36,7 +36,7 @@ def serialize_state(state: Any) -> Dict[str, Any]:
     }
 
 
-def decide_action(user_input: str, state: Any, api_key: str) -> Tuple[str, str]:
+def decide_action(user_input: str, state: Any, api_key: str) -> Tuple[str, str, Optional[str]]:
     """
     Call OpenAI API to decide which action to take based on user input and current state.
     
@@ -58,6 +58,8 @@ def decide_action(user_input: str, state: Any, api_key: str) -> Tuple[str, str]:
     
     # Serialize state
     state_dict = serialize_state(state)
+
+    print("STATE:", state_dict)
     
     # Create user message with state context
     user_message = f"""Current conversation state:
