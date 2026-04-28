@@ -2,7 +2,9 @@ from typing import Optional
 from datetime import datetime
 from state import ConversationState
 from helper import extract_info_from_input
-from llm import decide_action
+from state_machine import next_step
+from llm import generate_message
+import requests
 
 
 class AppointmentAgent:
@@ -42,55 +44,92 @@ class AppointmentAgent:
             }
         ]
     
-    def process_input(self, user_input: str) -> str:
-        """
-        Main function to process user input and return agent response.
-        
-        This method:
-        1. Extracts information from user input
-        2. Updates the conversation state
-        3. Calls LLM to decide next action
-        4. Executes the action
-        5. Returns the message to show the user
-        
-        Args:
-            user_input: The user's message
-            
-        Returns:
-            Message to display to the user
-        """
-        # Step 1: Extract information from user input
-        extracted_info = extract_info_from_input(user_input, self.state)
-        
-        # Step 2: Update state with exsracted information
-        self._update_state(extracted_info)
-        
-        # Step 3: Call LLM to decide action
-        action, message, field_being_asked = decide_action(user_input, self.state, self.openai_api_key)
-        # update last question field
-        setattr(self.state, "last_question_field", field_being_asked)
+    def process_input(self, user_input: str, selection=None) -> dict:
+        # Handle structured selection FIRST
+        if selection:
+            self.state.selected_provider = selection["provider"]
+            self.state.selected_appointment_time = selection["time"]
 
-        # Step 4: Execute the action
-        action_result = self._execute_action(action)
+        # introduction text
+        if user_input.strip() == "" and not self.state.full_name:
+            return {
+                "message": "Hi! I am an AI medical assistant. What can I help you with?",
+                "data": None,
+                "step": "ask_question"
+            }
+
+        # 1. Extract info
+        extracted_info = extract_info_from_input(user_input, self.state)
+        self._update_state(extracted_info)
+        just_collected = list(extracted_info.keys())
+
+        # detect confirmation in input
+        confirmation_words = ["yes", "correct", "confirmed", "looks good"]
+        if any(word in user_input.lower() for word in confirmation_words):
+            if self.state.selected_provider and self.state.selected_appointment_time:
+                self.state.is_confirmed = True
+
+        # 2. Decide next step
+        step, field = next_step(self.state)
+        self.state.last_question_field = field
+
+        if step != "ask_question":
+            self.state.last_question_field = None
+
+        # 3. Execute system actions
+        action_result = None
+        structured_data = None
+
+        if step == "validate_address":
+            action_result = self._validate_address()
+            # recompute step AFTER validation
+            step, field = next_step(self.state)
+
+        elif step == "show_appointments":
+            action_result, structured_data = self._show_appointments()
+
+        elif step == "confirm_appointment":
+            action_result = self._confirm_appointment()
+
+        elif step == "finish":
+            self.state.is_complete = True
+            return {
+                "message": "✅ Your appointment has been scheduled!",
+                "data": None,
+                "step": step
+            }
         
-        # Step 5: Combine message with action result if needed
+        # Track last question field (for extractor)
+        if step == "ask_question":
+            self.state.last_question_field = field
+        else:
+            self.state.last_question_field = None
+
+        # 4. Generate message via LLM
+        if step == "ask_question":
+            message = generate_message(
+                step, field, self.state, self.openai_api_key, just_collected
+            )
+        else:
+            message = ""
+
+        # 5. Combine
         if action_result:
-            final_message = f"{message}\n\n{action_result}"
+            final_message = f"{action_result}\n\n{message}"
         else:
             final_message = message
-        
-        return final_message
+
+        return {
+            "message": final_message,
+            "data": structured_data,
+            "step": step
+        }
     
     def _update_state(self, extracted_info: dict) -> None:
-        """
-        Update the conversation state with extracted information.
-        
-        Args:
-            extracted_info: Dictionary of extracted field names and values
-        """
         for field, value in extracted_info.items():
             if hasattr(self.state, field):
-                setattr(self.state, field, value)
+                if value is not None and value != "":
+                    setattr(self.state, field, value)
     
     def _execute_action(self, action: str) -> Optional[str]:
         """
@@ -131,8 +170,6 @@ class AppointmentAgent:
         """
         if not self.google_maps_api_key:
             return "GOOGLE_MAPS_API_KEY not found in .env file"
-
-        import requests
         
         address_string = f"{self.state.street}, {self.state.city}, {self.state.state} {self.state.zip_code}"
         url = "https://maps.googleapis.com/maps/api/geocode/json"
@@ -158,32 +195,21 @@ class AppointmentAgent:
             self.state.is_address_validated = False
             return f"❌ Address validation error: {str(e)}"   
     
-    def _show_appointments(self) -> str:
-        """
-        Format and return available appointments.
+    def _show_appointments(self):
+        appointments = []
+
+        for provider in self.available_providers:
+            appointments.append({
+                "name": provider["name"],
+                "specialty": provider["specialty"],
+                "times": provider["times"]
+            })
+
+        # Keep text for display
+        text = "📅 Please select a provider and time below."
+
+        return text, appointments
         
-        Returns:
-            Formatted list of available providers and times
-        """
-        appointments_text = "📅 Available Appointments:\n\n"
-        
-        for i, provider in enumerate(self.available_providers, 1):
-            appointments_text += f"{i}. {provider['name']} - {provider['specialty']}\n"
-            appointments_text += "   Available times:\n"
-            for time in provider['times']:
-                # Format the time nicely
-                try:
-                    dt = datetime.strptime(time, "%Y-%m-%d %H:%M")
-                    formatted_time = dt.strftime("%B %d, %Y at %I:%M %p")
-                    appointments_text += f"   • {formatted_time}\n"
-                except:
-                    appointments_text += f"   • {time}\n"
-            appointments_text += "\n"
-        
-        appointments_text += "Please let me know which provider and time you'd prefer!"
-        
-        return appointments_text
-    
     def _confirm_appointment(self) -> str:
         """
         Confirm the appointment.
@@ -192,29 +218,21 @@ class AppointmentAgent:
             Confirmation message
         """
         # Format confirmation details
-        confirmation = "\n" + "="*50 + "\n"
-        confirmation += "📋 APPOINTMENT CONFIRMATION\n"
-        confirmation += "="*50 + "\n\n"
-        
-        confirmation += f"Patient: {self.state.full_name}\n"
-        confirmation += f"Date of Birth: {self.state.date_of_birth}\n"
-        confirmation += f"Insurance: {self.state.payer_name}"
-        if self.state.insurance_id:
-            confirmation += f" (ID: {self.state.insurance_id})"
-        confirmation += f"\nReason: {self.state.chief_complaint}\n"
-        confirmation += f"Address: {self.state.street}, {self.state.city}, {self.state.state} {self.state.zip_code}\n"
-        
-        if self.state.selected_provider:
-            confirmation += f"\nProvider: {self.state.selected_provider}\n"
-        if self.state.selected_appointment_time:
-            if isinstance(self.state.selected_appointment_time, datetime):
-                time_str = self.state.selected_appointment_time.strftime("%B %d, %Y at %I:%M %p")
-            else:
-                time_str = str(self.state.selected_appointment_time)
-            confirmation += f"Time: {time_str}\n"
-        
-        confirmation += "\n" + "="*50
-        
+        confirmation = f"""
+            ### 📋 Confirm Appointment
+
+            **Patient:** {self.state.full_name}  
+            **DOB:** {self.state.date_of_birth}  
+            **Insurance:** {self.state.payer_name}  
+            **Reason:** {self.state.chief_complaint}  
+
+            **Address:**  
+            {self.state.street}  
+            {self.state.city}, {self.state.state} {self.state.zip_code}  
+
+            **Provider:** {self.state.selected_provider}  
+            **Time:** {self.state.selected_appointment_time}
+            """
         return confirmation
     
     def _finish_appointment(self) -> str:

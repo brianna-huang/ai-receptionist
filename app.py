@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from agent_manager import AgentManager
+from typing import Optional, List, Dict
 
 load_dotenv()
 
@@ -19,25 +20,50 @@ manager = AgentManager(OPENAI_API_KEY, GOOGLE_MAPS_API_KEY)
 class ChatRequest(BaseModel):
     session_id: str
     message: str
-
+    selection: Optional[Dict] = None
 
 class ChatResponse(BaseModel):
-    response: str
+    message: str
+    data: Optional[List[Dict]] = None
+    step: str
     is_complete: bool
 
 
 # ---- Routes ----
 @app.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
-    response = manager.process_message(req.session_id, req.message)
+# def chat(req: ChatRequest):
+#     result = manager.process_message(
+#         req.session_id,
+#         req.message,
+#         selection=req.selection
+#     )
     
+#     agent = manager.get_agent(req.session_id)
+
+#     return ChatResponse(
+#         message=result["message"],
+#         data=result.get("data"),
+#         step=result["step"],
+#         is_complete=agent.get_state().is_complete
+#     )
+def chat(req: ChatRequest):
     agent = manager.get_agent(req.session_id)
-    is_complete = agent.get_state().is_complete
+
+    if req.selection:
+        agent.state.selected_provider = req.selection["provider"]
+        agent.state.selected_appointment_time = req.selection["time"]
+
+        result = agent.process_input("", selection=req.selection)  # trigger next step
+    else:
+        result = agent.process_input(req.message)
 
     return ChatResponse(
-        response=response,
-        is_complete=is_complete
+        message=result["message"],
+        data=result.get("data"),
+        step=result["step"],
+        is_complete=agent.get_state().is_complete
     )
+    
 
 
 @app.post("/reset")

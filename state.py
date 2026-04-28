@@ -34,6 +34,7 @@ class ConversationState:
     
     # Completion status
     is_complete: bool = False
+    is_confirmed: bool = False
 
     # Track context
     last_question_field: Optional[str] = None

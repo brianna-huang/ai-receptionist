@@ -1,7 +1,6 @@
 from typing import Dict
 from agent import AppointmentAgent
 
-
 class AgentManager:
     """
     Manages multiple user sessions.
@@ -22,10 +21,9 @@ class AgentManager:
             )
         return self.sessions[session_id]
 
-    def process_message(self, session_id: str, user_input: str) -> str:
-        """Process a message for a specific session."""
+    def process_message(self, session_id: str, user_input: str, selection=None):
         agent = self.get_agent(session_id)
-        return agent.process_input(user_input)
+        return agent.process_input(user_input, selection)
 
     def reset_session(self, session_id: str):
         """Reset a user's session."""
