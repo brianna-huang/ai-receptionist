@@ -1,18 +1,18 @@
 # 🏥 AI Appointment Scheduler
 
 An end-to-end AI-powered chatbot for scheduling medical appointments.
-This project demonstrates a **production-style agent architecture** using a LangGraph-inspired workflow, FastAPI backend, and Streamlit frontend.
+This project uses a LangGraph-inspired workflow, FastAPI backend, and Streamlit frontend.
 
 ---
 
-## ✨ Features
+## Features
 
-* 💬 Conversational patient intake (name, DOB, insurance, complaint, address)
-* 🧠 Graph-based agent orchestration (LangGraph-style execution)
-* 📍 Address validation via Google Maps API
-* 📅 Interactive appointment selection UI
-* 💾 Persistent session memory (JSON-backed)
-* ⚡ Real-time UI updates with Streamlit
+* Conversational patient intake (name, DOB, insurance, complaint, address)
+* Graph-based agent orchestration (LangGraph-style execution)
+* Address validation via Google Maps API
+* Interactive appointment selection UI
+* Persistent session memory (JSON-backed)
+* Real-time UI updates with Streamlit
 
 ---
 
@@ -68,16 +68,7 @@ ai_scheduler/
 
 ## 🚀 Getting Started
 
-### 1. Clone the repo
-
-```bash
-git clone <your-repo-url>
-cd ai_scheduler
-```
-
----
-
-### 2. Create virtual environment
+### 1. Create virtual environment
 
 ```bash
 python -m venv venv
@@ -88,7 +79,7 @@ venv\Scripts\activate      # Windows
 
 ---
 
-### 3. Install dependencies
+### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -96,7 +87,7 @@ pip install -r requirements.txt
 
 ---
 
-### 4. Set environment variables
+### 3. Set environment variables
 
 Create a `.env` file in the root:
 
@@ -135,50 +126,32 @@ streamlit run ui.py
 
 ---
 
-## 🧪 How It Works
+## How It Works
 
 1. User enters information via chat
-2. Backend processes input through a **graph-based agent**
+2. Backend processes input through a graph-based agent
 3. Agent:
-
    * extracts structured data
    * determines next step
    * calls tools (e.g., address validation)
 4. UI updates dynamically:
-
    * asks next question OR
    * shows appointment buttons
 5. User selects a slot → confirmation → completion
 
 ---
 
-## 🧠 Agent Design
+## Agent Design
 
-This project uses a **LangGraph-style state machine**, where:
-
+This project uses a LangGraph-style state machine, where:
 * Nodes = actions (extract info, validate address, show appointments)
 * Edges = transitions between steps
 * State = shared memory across the conversation
 
 This enables:
-
 * automatic flow progression
 * clean separation of logic
 * easier debugging and extensibility
-
----
-
-## 📌 Example Flow
-
-```text
-User → "I need to see a doctor"
- → collect patient info
- → validate address
- → show available providers
- → user selects time
- → confirm appointment
- → ✅ done
-```
 
 ---
 
@@ -201,21 +174,6 @@ User → "I need to see a doctor"
 * Use Redis/Postgres for scalable persistence
 * Add async tool execution
 * Improve NLP extraction with structured LLM outputs
-
----
-
-## 💼 Why This Project Matters
-
-This project demonstrates:
-
-* real-world AI system design
-* agent orchestration patterns
-* API + frontend integration
-* stateful conversational UX
-
-It is representative of modern **healthcare AI, clinical workflows, and applied ML systems**.
-
----
 
 ## 📝 License
 
