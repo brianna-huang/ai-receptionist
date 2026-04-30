@@ -16,7 +16,7 @@ This project uses a LangGraph-inspired workflow, FastAPI backend, and Streamlit 
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```text
 Streamlit UI
@@ -30,40 +30,6 @@ LangGraph Agent
    ↓
 Persistent Memory (sessions.json)
 ```
-
----
-
-## 📁 Project Structure
-
-```text
-ai_scheduler/
-│
-├── app.py                  # FastAPI entrypoint
-├── config.py               # environment config
-├── requirements.txt
-├── run.sh                  # run script
-│
-├── graph/
-│   ├── state.py
-│   ├── graph.py
-│   ├── nodes.py
-│   ├── routers.py
-│
-├── services/
-│   ├── llm.py
-│   ├── extractor.py
-│   ├── google_maps.py
-│   ├── providers.py
-│
-├── storage/
-│   ├── memory.py
-│
-├── schemas/
-│   ├── api.py
-│
-└── ui.py                   # Streamlit frontend
-```
-
 ---
 
 ## 🚀 Getting Started
@@ -155,7 +121,7 @@ This enables:
 
 ---
 
-## 🔧 Technologies Used
+## Tech Stack
 
 * FastAPI
 * Streamlit
@@ -166,7 +132,7 @@ This enables:
 
 ---
 
-## 📈 Future Improvements
+## Future Improvements
 
 * Replace mock providers with real scheduling API
 * Add insurance verification step
@@ -175,6 +141,6 @@ This enables:
 * Add async tool execution
 * Improve NLP extraction with structured LLM outputs
 
-## 📝 License
+## License
 
 MIT License
