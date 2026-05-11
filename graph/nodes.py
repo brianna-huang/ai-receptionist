@@ -9,6 +9,19 @@ from graph.routers import REQUIRED_FIELDS
 
 def extract_node(state):
     user_input = state.get("user_input", "")
+
+    # handle confirmation
+    if state.get("step") == "confirm":
+        if any(word in user_input for word in ["yes", "y", "yeah", "yep", "confirm", "correct", "good"]):
+            state["is_confirmed"] = True
+            return state
+
+        if any(word in user_input for word in ["no", "nope", "change", "back", "wrong"]):
+            state["selected_provider"] = None
+            state["selected_time"] = None
+            state["is_confirmed"] = False
+            return state
+
     extracted = extract_info(user_input, state)
 
     for field, value in extracted.items():
@@ -25,6 +38,8 @@ def extract_node(state):
 
             # ONLY reject this field, not entire node
             return state
+        
+    state["missing_fields"] = [f for f in REQUIRED_FIELDS if not state.get(f)]
 
     return state
 

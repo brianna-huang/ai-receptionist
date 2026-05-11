@@ -30,13 +30,23 @@ builder.add_conditional_edges(
     {
         "ask_fields": "ask_fields",
         "show_appointments": "show_appointments",
+        "confirm": "confirm",
     },
 )
 
-builder.add_conditional_edges("show_appointments", route_after_selection)
+builder.add_conditional_edges(
+    "confirm",
+    route_after_confirm,
+    {
+        "confirm": "confirm",
+        "finish": "finish",
+        "show_appointments": "show_appointments",
+    },
+)
 
 builder.add_edge("show_appointments", END)
 builder.add_edge("ask_fields", END)
-builder.add_edge("confirm", END)
+builder.add_edge("finish", END)
+# builder.add_edge("confirm", END)
 
 graph = builder.compile()

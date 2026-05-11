@@ -21,8 +21,11 @@ def route_missing(state):
 
 def route_after_validation(state):
     if not state.get("is_address_validated"):
-        # stay in validation step instead of jumping backward
         return "validate_address"
+
+    # if user already selected → skip UI
+    if state.get("selected_provider") and state.get("selected_time"):
+        return "confirm"
 
     return "show_appointments"
 
@@ -33,4 +36,15 @@ def route_after_selection(state):
         return "show_appointments"
 
     # Once both are selected → move forward
-    return "confirm_appointment"
+    return "confirm"
+
+
+def route_after_confirm(state):
+    if state.get("is_confirmed"):
+        return "finish"
+
+    # if user said no → go back to scheduling
+    if not state.get("selected_provider") or not state.get("selected_time"):
+        return "show_appointments"
+
+    return "confirm"

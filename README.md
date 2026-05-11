@@ -1,4 +1,4 @@
-# 🏥 AI Appointment Scheduler
+# AI Appointment Scheduler
 
 An end-to-end AI-powered chatbot for scheduling medical appointments.
 This project uses a LangGraph-inspired workflow, FastAPI backend, and Streamlit frontend.
@@ -32,7 +32,7 @@ Persistent Memory (sessions.json)
 ```
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Create virtual environment
 
@@ -66,7 +66,7 @@ GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 
 ---
 
-## ▶️ Run the App
+## Run the App
 
 ### Option 1 (recommended)
 
@@ -137,7 +137,7 @@ This enables:
 * Replace mock providers with real scheduling API
 * Add insurance verification step
 * Deploy to cloud (Render / AWS / GCP)
-* Use Redis/Postgres for scalable persistence
+* Use Postgres for scalable persistence
 * Add async tool execution
 * Improve NLP extraction with structured LLM outputs
 
